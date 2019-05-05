@@ -10,7 +10,7 @@ void foobar()
 
 int main(int argc, char* argv[])
 {
-    int fd = open(argv[0], O_RDONLY);
+    int fd = open("/proc/self/exe", O_RDONLY);
     elf::elf f(elf::create_mmap_loader(fd));
 
 
