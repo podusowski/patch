@@ -4,33 +4,31 @@
 #include <fcntl.h>
 #include <iostream>
 
+#include "patch.hpp"
+
 void foobar()
 {
 }
 
+void bar()
+{
+}
+
+struct foo
+{
+    void bar()
+    {
+    }
+};
+
 int main(int argc, char* argv[])
 {
-    int fd = open("/proc/self/exe", O_RDONLY);
-    elf::elf f(elf::create_mmap_loader(fd));
+    patch::live_process p;
+    std::cout << "real addr: " << std::hex
+              << "foobar: " << reinterpret_cast<std::intptr_t>(&foobar)
+              << ", bar: " << reinterpret_cast<std::intptr_t>(&bar) << std::endl;
+    p.patch("Z6foobarv");
 
-
-    for (auto &sec : f.sections()) {
-        if (sec.get_hdr().type != elf::sht::symtab && sec.get_hdr().type != elf::sht::dynsym)
-                continue;
-
-        printf("Symbol table '%s':\n", sec.get_name().c_str());
-        printf("%6s: %-16s %-5s %-7s %-7s %-5s %s\n",
-                "Num", "Value", "Size", "Type", "Binding", "Index",
-                "Name");
-        int i = 0;
-        for (auto sym : sec.as_symtab()) {
-                auto &d = sym.get_data();
-                std::cout << 
-                        d.value << d.size
-                        << to_string(d.type()).c_str()
-                        << to_string(d.binding()).c_str()
-                        << to_string(d.shnxd).c_str()
-                        << sym.get_name().c_str() << std::endl;
-        }
-    }
+    p.patch_function(&foobar);
+    p.patch_function(&foo::bar);
 }
